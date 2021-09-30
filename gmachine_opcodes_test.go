@@ -139,3 +139,20 @@ func TestSETA(t *testing.T) {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
 	}
 }
+
+func TestJUMP(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.INCA
+	g.Memory[1] = gmachine.JUMP
+	g.Memory[2] = 0
+	g.Memory[3] = gmachine.JUMP
+	g.Memory[4] = 0
+	g.Memory[5] = gmachine.DECA
+	g.Run()
+
+	var wantA gmachine.Word = 2
+	if wantA != g.A {
+		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+	}
+}

@@ -21,6 +21,7 @@ const (
 	DECA
 	SETA
 	BIOS
+	JUMP
 )
 
 const (
@@ -46,6 +47,7 @@ var TranslateTable = map[string]Instruction{
 	"DECA": {Opcode: DECA, Operands: 0},
 	"INCA": {Opcode: INCA, Operands: 0},
 	"BIOS": {Opcode: BIOS, Operands: 2},
+	"JUMP": {Opcode: JUMP, Operands: 1},
 }
 
 type Word uint64
@@ -93,6 +95,10 @@ func (g *GMachine) Run() {
 				}
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
+		case JUMP:
+			nextPos := g.Memory[g.P]
+			g.Memory = append(g.Memory[:g.P-1], g.Memory[g.P:]...)
+			g.P = nextPos
 		}
 	}
 
