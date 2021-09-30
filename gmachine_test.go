@@ -32,6 +32,10 @@ func TestNew(t *testing.T) {
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
+	var wantE gmachine.Word = 0
+	if wantA != g.E {
+		t.Errorf("want initial A value %d, got %d", wantE, g.E)
+	}
 }
 
 func TestHALT(t *testing.T) {
@@ -87,6 +91,53 @@ func TestDECA(t *testing.T) {
 	var wantA gmachine.Word = 1
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+	}
+}
+
+func TestBIOS(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.SETA
+	g.Memory[1] = 'A'
+	g.Memory[2] = gmachine.BIOS
+	g.Memory[3] = gmachine.IOWrite
+	g.Memory[4] = gmachine.PortStdout
+	buf := &bytes.Buffer{}
+	g.Stdout = buf
+	g.Run()
+	want := "A"
+	got := buf.String()
+	if want != got {
+		t.Errorf("want %q, got %q", want, got)
+	}
+	var wantP gmachine.Word = 6
+	gotP := g.P
+	if wantP != gotP {
+		t.Errorf("wantP %d, got %d", wantP, gotP)
+	}
+}
+
+func TestBIOSStderr(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.SETA
+	g.Memory[1] = 'A'
+	g.Memory[2] = gmachine.BIOS
+	g.Memory[3] = gmachine.IOWrite
+	g.Memory[4] = gmachine.PortStderr
+	buf := &bytes.Buffer{}
+	g.Stderr = buf
+	g.Run()
+	want := "A"
+	got := buf.String()
+
+	if want != got {
+		t.Errorf("want %q, got %q", want, got)
+	}
+	var wantP gmachine.Word = 6
+	gotP := g.P
+	if wantP != gotP {
+		t.Errorf("wantP %d, got %d", wantP, gotP)
 	}
 }
 
@@ -278,6 +329,30 @@ func TestRunProgramFromReader(t *testing.T) {
 	}
 }
 
+// func TestRunProgramUndocumentedOpcode(t *testing.T) {
+// 	t.Parallel()
+// 	program := bytes.NewReader([]byte{
+// 		0, 0, 0, 0, 0, 0, 0, gmachine.RESERVED,
+// 	})
+// 	g := gmachine.New()
+// 	err := g.RunProgramFromReader(program)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	var wantA gmachine.Word = 0
+// 	if wantA != g.A {
+// 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+// 	}
+// 	var wantP gmachine.Word = 2
+// 	if wantP != g.P {
+// 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+// 	}
+// 	var wantE gmachine.Word = gmachine.RESERVED
+// 	if wantE != g.E {
+// 		t.Errorf("want initial E value %d, got %d", wantE, g.E)
+// 	}
+// }
+
 func TestReadWords(t *testing.T) {
 	t.Parallel()
 	want := []gmachine.Word{gmachine.SETA, math.MaxUint64, gmachine.DECA}
@@ -349,4 +424,3 @@ func TestExecuteBinary(t *testing.T) {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
 }
-

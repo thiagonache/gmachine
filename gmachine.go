@@ -20,6 +20,18 @@ const (
 	INCA
 	DECA
 	SETA
+	BIOS
+)
+
+const (
+	IOWrite = iota
+	IORead
+)
+
+const (
+	PortStdin = iota
+	PortStdout
+	PortStderr
 )
 
 type Instruction struct {
@@ -33,14 +45,15 @@ var TranslateTable = map[string]Instruction{
 	"SETA": {Opcode: SETA, Operands: 1},
 	"DECA": {Opcode: DECA, Operands: 0},
 	"INCA": {Opcode: INCA, Operands: 0},
+	"BIOS": {Opcode: BIOS, Operands: 2},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A      Word
-	P      Word
-	Memory []Word
+	A, E, P        Word
+	Memory         []Word
+	Stdout, Stderr io.Writer
 }
 
 func New() *GMachine {
@@ -48,11 +61,14 @@ func New() *GMachine {
 		A:      0,
 		P:      0,
 		Memory: make([]Word, DefaultMemSize),
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 }
 
 func (g *GMachine) Run() {
 	for {
+		fmt.Println(g.P)
 		opcode := g.Memory[g.P]
 		g.P++
 		switch opcode {
@@ -66,6 +82,18 @@ func (g *GMachine) Run() {
 		case SETA:
 			g.A = g.Memory[g.P]
 			g.P++
+		case BIOS:
+			operation := g.Memory[g.P]
+			g.P++
+			fileDescriptor := g.Memory[g.P]
+			g.P++
+			if operation == IOWrite {
+				if fileDescriptor == PortStdout {
+					fmt.Fprintf(g.Stdout, "%c", g.A)
+					continue
+				}
+				fmt.Fprintf(g.Stderr, "%c", g.A)
+			}
 		}
 	}
 
@@ -152,6 +180,7 @@ func (g *GMachine) RunProgramFromReader(r io.Reader) error {
 		return err
 	}
 	g.RunProgram(words)
+
 	return nil
 }
 
@@ -179,4 +208,9 @@ func WriteWords(w io.Writer, data []Word) error {
 		w.Write(rawBytes)
 	}
 	return nil
+}
+
+func RunCLI(path string) error {
+	g := New()
+	return g.ExecuteBinary(path)
 }
