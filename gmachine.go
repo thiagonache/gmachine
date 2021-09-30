@@ -119,7 +119,7 @@ func Assemble(code []string) ([]Word, error) {
 	for pos := 0; pos < len(code); pos++ {
 		op, ok := TranslateTable[code[pos]]
 		if !ok {
-			return nil, fmt.Errorf("invalid instruction %q", code[pos])
+			return nil, fmt.Errorf("invalid instruction %q at postion %d", code[pos], pos)
 		}
 		words = append(words, op.Opcode)
 		if op.Operands > 0 {
@@ -135,7 +135,6 @@ func Assemble(code []string) ([]Word, error) {
 				words = append(words, operand)
 				pos++
 			}
-
 		}
 	}
 	return words, nil
