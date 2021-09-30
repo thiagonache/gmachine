@@ -107,7 +107,7 @@ func TestAssembleFromFileSetADeca(t *testing.T) {
 	}
 }
 
-func TestAssembleFromFileBIOS(t *testing.T) {
+func TestAssembleFromFileMultipleOperands(t *testing.T) {
 	t.Parallel()
 
 	words, err := gmachine.AssembleFromFile("testdata/biosstdout.gasm")
