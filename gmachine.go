@@ -53,15 +53,14 @@ var TranslateTable = map[string]Instruction{
 type Word uint64
 
 type GMachine struct {
-	A, E, P        Word
+	A, L, P        Word
 	Memory         []Word
 	Stdout, Stderr io.Writer
 }
 
 func New() *GMachine {
 	return &GMachine{
-		A:      0,
-		P:      0,
+		L:      DefaultMemSize,
 		Memory: make([]Word, DefaultMemSize),
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
@@ -96,9 +95,14 @@ func (g *GMachine) Run() {
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
 		case JUMP:
-			nextPos := g.Memory[g.P]
-			g.Memory = append(g.Memory[:g.P-1], g.Memory[g.P:]...)
-			g.P = nextPos
+			if g.L == DefaultMemSize {
+				g.L = g.P
+				nextPos := g.Memory[g.P]
+				g.P = nextPos
+				continue
+			}
+			g.P = g.L + 1
+			g.L = DefaultMemSize
 		}
 	}
 

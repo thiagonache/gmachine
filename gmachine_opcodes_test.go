@@ -27,9 +27,9 @@ func TestNew(t *testing.T) {
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
-	var wantE gmachine.Word = 0
-	if wantA != g.E {
-		t.Errorf("want initial A value %d, got %d", wantE, g.E)
+	var wantL gmachine.Word = gmachine.DefaultMemSize
+	if wantL != g.L {
+		t.Errorf("want initial A value %d, got %d", wantL, g.L)
 	}
 }
 
@@ -148,10 +148,14 @@ func TestJUMP(t *testing.T) {
 	g.Memory[2] = 0
 	g.Memory[3] = gmachine.JUMP
 	g.Memory[4] = 0
-	g.Memory[5] = gmachine.DECA
+	g.Memory[5] = gmachine.JUMP
+	g.Memory[6] = 0
+	g.Memory[7] = gmachine.JUMP
+	g.Memory[8] = 0
+	g.Memory[9] = gmachine.DECA
 	g.Run()
 
-	var wantA gmachine.Word = 2
+	var wantA gmachine.Word = 4
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
