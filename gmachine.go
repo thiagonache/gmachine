@@ -21,7 +21,8 @@ const (
 	DECA
 	SETA
 	BIOS
-	JUMP
+	CMP
+	JMP
 )
 
 const (
@@ -47,20 +48,20 @@ var TranslateTable = map[string]Instruction{
 	"DECA": {Opcode: DECA, Operands: 0},
 	"INCA": {Opcode: INCA, Operands: 0},
 	"BIOS": {Opcode: BIOS, Operands: 2},
-	"JUMP": {Opcode: JUMP, Operands: 1},
+	"CMP":  {Opcode: CMP, Operands: 1},
+	"JMP":  {Opcode: JMP, Operands: 1},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A, L, P        Word
+	A, P, T        Word
 	Memory         []Word
 	Stdout, Stderr io.Writer
 }
 
 func New() *GMachine {
 	return &GMachine{
-		L:      DefaultMemSize,
 		Memory: make([]Word, DefaultMemSize),
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
@@ -94,15 +95,19 @@ func (g *GMachine) Run() {
 				}
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
-		case JUMP:
-			if g.L == DefaultMemSize {
-				g.L = g.P
-				nextPos := g.Memory[g.P]
-				g.P = nextPos
+		case CMP:
+			value := g.Memory[g.P]
+			if value == g.A {
+				g.T = 1
+			}
+			g.P++
+		case JMP:
+			if g.T == 0 {
+				g.P = g.Memory[g.P]
 				continue
 			}
-			g.P = g.L + 1
-			g.L = DefaultMemSize
+			g.P++
+			g.T = 0
 		}
 	}
 

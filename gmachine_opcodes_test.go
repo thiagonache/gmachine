@@ -27,9 +27,9 @@ func TestNew(t *testing.T) {
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
-	var wantL gmachine.Word = gmachine.DefaultMemSize
-	if wantL != g.L {
-		t.Errorf("want initial A value %d, got %d", wantL, g.L)
+	var wantT gmachine.Word = 0
+	if wantT != g.T {
+		t.Errorf("want initial A value %d, got %d", wantT, g.T)
 	}
 }
 
@@ -140,22 +140,50 @@ func TestSETA(t *testing.T) {
 	}
 }
 
-func TestJUMP(t *testing.T) {
+func TestCMP(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.CMP
+	g.Memory[1] = 5
+	g.Run()
+	var wantT gmachine.Word = 0
+	if wantT != g.T {
+		t.Errorf("want initial T value %d, got %d", wantT, g.T)
+	}
+	var wantP gmachine.Word = 3
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
+func TestCMPSetT(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	g.Memory[0] = gmachine.INCA
-	g.Memory[1] = gmachine.JUMP
-	g.Memory[2] = 0
-	g.Memory[3] = gmachine.JUMP
-	g.Memory[4] = 0
-	g.Memory[5] = gmachine.JUMP
-	g.Memory[6] = 0
-	g.Memory[7] = gmachine.JUMP
-	g.Memory[8] = 0
-	g.Memory[9] = gmachine.DECA
+	g.Memory[1] = gmachine.INCA
+	g.Memory[2] = gmachine.CMP
+	g.Memory[3] = 2
 	g.Run()
+	var wantT gmachine.Word = 1
+	if wantT != g.T {
+		t.Errorf("want initial T value %d, got %d", wantT, g.T)
+	}
+	var wantP gmachine.Word = 5
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
 
-	var wantA gmachine.Word = 4
+func TestJMP(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.INCA
+	g.Memory[1] = gmachine.CMP
+	g.Memory[2] = 10
+	g.Memory[3] = gmachine.JMP
+	g.Memory[4] = 0
+	g.Run()
+	var wantA gmachine.Word = 10
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
