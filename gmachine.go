@@ -22,7 +22,7 @@ const (
 	SETA
 	BIOS
 	CMP
-	JMP
+	JEQ
 )
 
 const (
@@ -49,13 +49,14 @@ var TranslateTable = map[string]Instruction{
 	"INCA": {Opcode: INCA, Operands: 0},
 	"BIOS": {Opcode: BIOS, Operands: 2},
 	"CMP":  {Opcode: CMP, Operands: 1},
-	"JMP":  {Opcode: JMP, Operands: 1},
+	"JEQ":  {Opcode: JEQ, Operands: 1},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A, P, T        Word
+	A, P           Word
+	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
 }
@@ -81,13 +82,10 @@ func (g *GMachine) Run() {
 		case DECA:
 			g.A--
 		case SETA:
-			g.A = g.Memory[g.P]
-			g.P++
+			g.A = g.Next()
 		case BIOS:
-			operation := g.Memory[g.P]
-			g.P++
-			fileDescriptor := g.Memory[g.P]
-			g.P++
+			operation := g.Next()
+			fileDescriptor := g.Next()
 			if operation == IOWrite {
 				if fileDescriptor == PortStdout {
 					fmt.Fprintf(g.Stdout, "%c", g.A)
@@ -96,21 +94,27 @@ func (g *GMachine) Run() {
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
 		case CMP:
-			value := g.Memory[g.P]
+			value := g.Next()
 			if value == g.A {
-				g.T = 1
+				g.FlagZ = true
+				continue
 			}
-			g.P++
-		case JMP:
-			if g.T == 0 {
+			g.FlagZ = false
+		case JEQ:
+			if g.FlagZ == false {
 				g.P = g.Memory[g.P]
 				continue
 			}
 			g.P++
-			g.T = 0
 		}
 	}
 
+}
+
+func (g *GMachine) Next() Word {
+	next := g.Memory[g.P]
+	g.P++
+	return next
 }
 
 func (g *GMachine) RunProgram(instructions []Word) {

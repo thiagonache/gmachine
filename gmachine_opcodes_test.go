@@ -27,9 +27,9 @@ func TestNew(t *testing.T) {
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
-	var wantT gmachine.Word = 0
-	if wantT != g.T {
-		t.Errorf("want initial A value %d, got %d", wantT, g.T)
+	wantZ := false
+	if wantZ != g.FlagZ {
+		t.Errorf("want initial A value %t, got %t", wantZ, g.FlagZ)
 	}
 }
 
@@ -146,9 +146,9 @@ func TestCMP(t *testing.T) {
 	g.Memory[0] = gmachine.CMP
 	g.Memory[1] = 5
 	g.Run()
-	var wantT gmachine.Word = 0
-	if wantT != g.T {
-		t.Errorf("want initial T value %d, got %d", wantT, g.T)
+	wantZ := false
+	if wantZ != g.FlagZ {
+		t.Errorf("want flag Z value %t, got %t", wantZ, g.FlagZ)
 	}
 	var wantP gmachine.Word = 3
 	if wantP != g.P {
@@ -164,27 +164,12 @@ func TestCMPSetT(t *testing.T) {
 	g.Memory[2] = gmachine.CMP
 	g.Memory[3] = 2
 	g.Run()
-	var wantT gmachine.Word = 1
-	if wantT != g.T {
-		t.Errorf("want initial T value %d, got %d", wantT, g.T)
+	wantZ := true
+	if wantZ != g.FlagZ {
+		t.Errorf("want flag Z value %t, got %t", wantZ, g.FlagZ)
 	}
 	var wantP gmachine.Word = 5
 	if wantP != g.P {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
-	}
-}
-
-func TestJMP(t *testing.T) {
-	t.Parallel()
-	g := gmachine.New()
-	g.Memory[0] = gmachine.INCA
-	g.Memory[1] = gmachine.CMP
-	g.Memory[2] = 10
-	g.Memory[3] = gmachine.JMP
-	g.Memory[4] = 0
-	g.Run()
-	var wantA gmachine.Word = 10
-	if wantA != g.A {
-		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
 }
