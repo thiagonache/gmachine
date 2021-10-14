@@ -139,7 +139,7 @@ func TestJEQFromReader(t *testing.T) {
 	t.Parallel()
 	program := bytes.NewReader([]byte{
 		0, 0, 0, 0, 0, 0, 0, gmachine.INCA,
-		0, 0, 0, 0, 0, 0, 0, gmachine.CMP,
+		0, 0, 0, 0, 0, 0, 0, gmachine.CMPA,
 		0, 0, 0, 0, 0, 0, 0, 10,
 		0, 0, 0, 0, 0, 0, 0, gmachine.JEQ,
 		0, 0, 0, 0, 0, 0, 0, 0,

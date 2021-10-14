@@ -140,10 +140,10 @@ func TestSETA(t *testing.T) {
 	}
 }
 
-func TestCMP(t *testing.T) {
+func TestCMPA(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
-	g.Memory[0] = gmachine.CMP
+	g.Memory[0] = gmachine.CMPA
 	g.Memory[1] = 5
 	g.Run()
 	wantZ := false
@@ -156,12 +156,12 @@ func TestCMP(t *testing.T) {
 	}
 }
 
-func TestCMPSetT(t *testing.T) {
+func TestCMPASetZ(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	g.Memory[0] = gmachine.INCA
 	g.Memory[1] = gmachine.INCA
-	g.Memory[2] = gmachine.CMP
+	g.Memory[2] = gmachine.CMPA
 	g.Memory[3] = 2
 	g.Run()
 	wantZ := true

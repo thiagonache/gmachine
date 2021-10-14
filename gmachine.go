@@ -21,7 +21,7 @@ const (
 	DECA
 	SETA
 	BIOS
-	CMP
+	CMPA
 	JEQ
 )
 
@@ -48,7 +48,7 @@ var TranslateTable = map[string]Instruction{
 	"DECA": {Opcode: DECA, Operands: 0},
 	"INCA": {Opcode: INCA, Operands: 0},
 	"BIOS": {Opcode: BIOS, Operands: 2},
-	"CMP":  {Opcode: CMP, Operands: 1},
+	"CMPA": {Opcode: CMPA, Operands: 1},
 	"JEQ":  {Opcode: JEQ, Operands: 1},
 }
 
@@ -93,7 +93,7 @@ func (g *GMachine) Run() {
 				}
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
-		case CMP:
+		case CMPA:
 			value := g.Next()
 			if value == g.A {
 				g.FlagZ = true
