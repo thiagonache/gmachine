@@ -21,6 +21,8 @@ const (
 	DECA
 	SETA
 	BIOS
+	CMPA
+	JEQ
 )
 
 const (
@@ -46,20 +48,21 @@ var TranslateTable = map[string]Instruction{
 	"DECA": {Opcode: DECA, Operands: 0},
 	"INCA": {Opcode: INCA, Operands: 0},
 	"BIOS": {Opcode: BIOS, Operands: 2},
+	"CMPA": {Opcode: CMPA, Operands: 1},
+	"JEQ":  {Opcode: JEQ, Operands: 1},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A, E, P        Word
+	A, P           Word
+	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
 }
 
 func New() *GMachine {
 	return &GMachine{
-		A:      0,
-		P:      0,
 		Memory: make([]Word, DefaultMemSize),
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
@@ -79,13 +82,10 @@ func (g *GMachine) Run() {
 		case DECA:
 			g.A--
 		case SETA:
-			g.A = g.Memory[g.P]
-			g.P++
+			g.A = g.Next()
 		case BIOS:
-			operation := g.Memory[g.P]
-			g.P++
-			fileDescriptor := g.Memory[g.P]
-			g.P++
+			operation := g.Next()
+			fileDescriptor := g.Next()
 			if operation == IOWrite {
 				if fileDescriptor == PortStdout {
 					fmt.Fprintf(g.Stdout, "%c", g.A)
@@ -93,9 +93,28 @@ func (g *GMachine) Run() {
 				}
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
+		case CMPA:
+			value := g.Next()
+			if value == g.A {
+				g.FlagZ = true
+				continue
+			}
+			g.FlagZ = false
+		case JEQ:
+			if g.FlagZ == false {
+				g.P = g.Memory[g.P]
+				continue
+			}
+			g.P++
 		}
 	}
 
+}
+
+func (g *GMachine) Next() Word {
+	next := g.Memory[g.P]
+	g.P++
+	return next
 }
 
 func (g *GMachine) RunProgram(instructions []Word) {

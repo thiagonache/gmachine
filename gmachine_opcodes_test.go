@@ -27,9 +27,9 @@ func TestNew(t *testing.T) {
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
-	var wantE gmachine.Word = 0
-	if wantA != g.E {
-		t.Errorf("want initial A value %d, got %d", wantE, g.E)
+	wantZ := false
+	if wantZ != g.FlagZ {
+		t.Errorf("want initial A value %t, got %t", wantZ, g.FlagZ)
 	}
 }
 
@@ -135,6 +135,40 @@ func TestSETA(t *testing.T) {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}
 	var wantP gmachine.Word = 3
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
+func TestCMPA(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.CMPA
+	g.Memory[1] = 5
+	g.Run()
+	wantZ := false
+	if wantZ != g.FlagZ {
+		t.Errorf("want flag Z value %t, got %t", wantZ, g.FlagZ)
+	}
+	var wantP gmachine.Word = 3
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
+func TestCMPASetZ(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.INCA
+	g.Memory[1] = gmachine.INCA
+	g.Memory[2] = gmachine.CMPA
+	g.Memory[3] = 2
+	g.Run()
+	wantZ := true
+	if wantZ != g.FlagZ {
+		t.Errorf("want flag Z value %t, got %t", wantZ, g.FlagZ)
+	}
+	var wantP gmachine.Word = 5
 	if wantP != g.P {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
 	}
