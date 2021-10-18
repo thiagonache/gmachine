@@ -79,7 +79,6 @@ func New() *GMachine {
 func (g *GMachine) Run() {
 	for {
 		opcode := g.Memory[g.P]
-		fmt.Println(opcode)
 		g.P++
 		switch opcode {
 		case NOOP:
