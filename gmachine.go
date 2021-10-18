@@ -25,6 +25,8 @@ const (
 	CMPA
 	JEQ
 	JUMP
+	CALL
+	RETN
 )
 
 const (
@@ -53,12 +55,14 @@ var TranslateTable = map[string]Instruction{
 	"CMPA": {Opcode: CMPA, Operands: 1},
 	"JEQ":  {Opcode: JEQ, Operands: 1},
 	"JUMP": {Opcode: JUMP, Operands: 1},
+	"CALL": {Opcode: CALL, Operands: 1},
+	"RETN": {Opcode: RETN, Operands: 0},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A, P           Word
+	A, L, P        Word
 	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
@@ -75,6 +79,7 @@ func New() *GMachine {
 func (g *GMachine) Run() {
 	for {
 		opcode := g.Memory[g.P]
+		fmt.Println(opcode)
 		g.P++
 		switch opcode {
 		case NOOP:
@@ -111,6 +116,12 @@ func (g *GMachine) Run() {
 			g.P++
 		case JUMP:
 			g.P = g.Next()
+		case CALL:
+			g.L = g.P
+			g.P = g.Next()
+		case RETN:
+			g.P = g.L + 2
+			g.L = 0
 		}
 	}
 

@@ -178,6 +178,59 @@ func TestJUMPFromReader(t *testing.T) {
 	}
 }
 
+func TestCALLFromReader(t *testing.T) {
+	t.Parallel()
+	program := bytes.NewReader([]byte{
+		0, 0, 0, 0, 0, 0, 0, gmachine.INCA,
+		0, 0, 0, 0, 0, 0, 0, gmachine.CALL,
+		0, 0, 0, 0, 0, 0, 0, 10,
+	})
+	g := gmachine.New()
+	err := g.RunProgramFromReader(program)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wantA gmachine.Word = 1
+	if wantA != g.A {
+		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+	}
+	var wantP gmachine.Word = 11
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+	var wantL gmachine.Word = 2
+	if wantL != g.L {
+		t.Errorf("want initial L value %d, got %d", wantL, g.L)
+	}
+}
+
+func TestRETNFromReader(t *testing.T) {
+	t.Parallel()
+	program := bytes.NewReader([]byte{
+		0, 0, 0, 0, 0, 0, 0, gmachine.INCA,
+		0, 0, 0, 0, 0, 0, 0, gmachine.CALL,
+		0, 0, 0, 0, 0, 0, 0, 3,
+		0, 0, 0, 0, 0, 0, 0, gmachine.RETN,
+	})
+	g := gmachine.New()
+	err := g.RunProgramFromReader(program)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wantA gmachine.Word = 1
+	if wantA != g.A {
+		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+	}
+	var wantP gmachine.Word = 5
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+	var wantL gmachine.Word = 0
+	if wantL != g.L {
+		t.Errorf("want initial L value %d, got %d", wantL, g.L)
+	}
+}
+
 func TestExecuteBinary(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
