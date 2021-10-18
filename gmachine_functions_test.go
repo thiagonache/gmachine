@@ -209,7 +209,10 @@ func TestRETNFromReader(t *testing.T) {
 	program := bytes.NewReader([]byte{
 		0, 0, 0, 0, 0, 0, 0, gmachine.INCA,
 		0, 0, 0, 0, 0, 0, 0, gmachine.CALL,
-		0, 0, 0, 0, 0, 0, 0, 3,
+		0, 0, 0, 0, 0, 0, 0, 5,
+		0, 0, 0, 0, 0, 0, 0, gmachine.INCA,
+		0, 0, 0, 0, 0, 0, 0, gmachine.HALT,
+		0, 0, 0, 0, 0, 0, 0, gmachine.INCA,
 		0, 0, 0, 0, 0, 0, 0, gmachine.RETN,
 	})
 	g := gmachine.New()
@@ -217,7 +220,7 @@ func TestRETNFromReader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var wantA gmachine.Word = 1
+	var wantA gmachine.Word = 3
 	if wantA != g.A {
 		t.Errorf("want initial A value %d, got %d", wantA, g.A)
 	}

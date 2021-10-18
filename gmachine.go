@@ -119,7 +119,7 @@ func (g *GMachine) Run() {
 			g.L = g.P
 			g.P = g.Next()
 		case RETN:
-			g.P = g.L + 2
+			g.P = g.L + 1
 			g.L = 0
 		}
 	}
