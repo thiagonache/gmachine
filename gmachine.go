@@ -24,6 +24,7 @@ const (
 	BIOS
 	CMPA
 	JEQ
+	JUMP
 )
 
 const (
@@ -51,6 +52,7 @@ var TranslateTable = map[string]Instruction{
 	"BIOS": {Opcode: BIOS, Operands: 2},
 	"CMPA": {Opcode: CMPA, Operands: 1},
 	"JEQ":  {Opcode: JEQ, Operands: 1},
+	"JUMP": {Opcode: JUMP, Operands: 1},
 }
 
 type Word uint64
@@ -107,6 +109,8 @@ func (g *GMachine) Run() {
 				continue
 			}
 			g.P++
+		case JUMP:
+			g.P = g.Next()
 		}
 	}
 

@@ -160,6 +160,24 @@ func TestJEQFromReader(t *testing.T) {
 	}
 }
 
+func TestJUMPFromReader(t *testing.T) {
+	t.Parallel()
+	program := bytes.NewReader([]byte{
+		0, 0, 0, 0, 0, 0, 0, gmachine.JUMP,
+		0, 0, 0, 0, 0, 0, 0, 10,
+	})
+	g := gmachine.New()
+	err := g.RunProgramFromReader(program)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var wantP gmachine.Word = 11
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
 func TestExecuteBinary(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
