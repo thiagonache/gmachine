@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // DefaultMemSize is the number of 64-bit words of memory which will be
@@ -169,7 +170,7 @@ func AssembleFromFile(path string) ([]Word, error) {
 	code := []string{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		code = append(code, scanner.Text())
+		code = append(code, strings.ToUpper(scanner.Text()))
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err

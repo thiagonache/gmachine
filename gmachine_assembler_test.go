@@ -107,6 +107,25 @@ func TestAssembleFromFileSetADeca(t *testing.T) {
 	}
 }
 
+func TestAssembleFromFileLowercase(t *testing.T) {
+	t.Parallel()
+
+	words, err := gmachine.AssembleFromFile("testdata/lowercase.gasm")
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := gmachine.New()
+	g.RunProgram(words)
+	var wantA gmachine.Word = 5
+	if wantA != g.A {
+		t.Errorf("want initial A value %d, got %d", wantA, g.A)
+	}
+	var wantP gmachine.Word = 3
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
 func TestAssembleFromFileMultipleOperands(t *testing.T) {
 	t.Parallel()
 
