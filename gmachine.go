@@ -62,7 +62,7 @@ var TranslateTable = map[string]Instruction{
 type Word uint64
 
 type GMachine struct {
-	A, L, P        Word
+	A, N, P        Word
 	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
@@ -116,11 +116,11 @@ func (g *GMachine) Run() {
 		case JUMP:
 			g.P = g.Next()
 		case CALL:
-			g.L = g.P
+			g.N = g.P + 1
 			g.P = g.Next()
 		case RETN:
-			g.P = g.L + 1
-			g.L = 0
+			g.P = g.N
+			g.N = 0
 		}
 	}
 

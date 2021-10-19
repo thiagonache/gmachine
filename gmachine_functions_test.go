@@ -198,9 +198,9 @@ func TestCALLFromReader(t *testing.T) {
 	if wantP != g.P {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
 	}
-	var wantL gmachine.Word = 2
-	if wantL != g.L {
-		t.Errorf("want initial L value %d, got %d", wantL, g.L)
+	var wantN gmachine.Word = 3
+	if wantN != g.N {
+		t.Errorf("want initial N value %d, got %d", wantN, g.N)
 	}
 }
 
@@ -228,9 +228,9 @@ func TestRETNFromReader(t *testing.T) {
 	if wantP != g.P {
 		t.Errorf("want initial P value %d, got %d", wantP, g.P)
 	}
-	var wantL gmachine.Word = 0
-	if wantL != g.L {
-		t.Errorf("want initial L value %d, got %d", wantL, g.L)
+	var wantN gmachine.Word = 0
+	if wantN != g.N {
+		t.Errorf("want initial N value %d, got %d", wantN, g.N)
 	}
 }
 
