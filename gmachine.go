@@ -151,9 +151,15 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
 	for pos := 0; pos < len(code); pos++ {
-		op, ok := TranslateTable[code[pos]]
+		word := code[pos]
+
+		if strings.HasSuffix(word, ":") {
+			fmt.Println("start routine")
+		}
+
+		op, ok := TranslateTable[word]
 		if !ok {
-			return nil, fmt.Errorf("invalid instruction %q at postion %d", code[pos], pos)
+			return nil, fmt.Errorf("invalid instruction %q at postion %d", word, pos)
 		}
 		words = append(words, op.Opcode)
 		if op.Operands > 0 {
@@ -185,6 +191,31 @@ func AssembleFromFile(path string) ([]Word, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		code = append(code, strings.ToUpper(scanner.Text()))
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	words, err := Assemble(code)
+	if err != nil {
+		return nil, err
+	}
+	return words, nil
+}
+
+func AssembleFromText(text string) ([]Word, error) {
+	code := []string{}
+	scanner := bufio.NewScanner(strings.NewReader(text))
+	for scanner.Scan() {
+		line := scanner.Text()
+		switch {
+		case line == "":
+			continue
+		case strings.HasPrefix(line, "#"):
+			continue
+		}
+		for _, item := range strings.Split(line, " ") {
+			code = append(code, strings.ToUpper(item))
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
