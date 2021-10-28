@@ -28,6 +28,8 @@ const (
 	JUMP
 	CALL
 	RETN
+	INCI
+	CMPI
 )
 
 const (
@@ -66,12 +68,14 @@ var TranslateTable = map[string]Instruction{
 	"JUMP": {Opcode: JUMP, Operands: 1},
 	"CALL": {Opcode: CALL, Operands: 1},
 	"RETN": {Opcode: RETN, Operands: 0},
+	"INCI": {Opcode: INCI, Operands: 0},
+	"CMPI": {Opcode: CMPI, Operands: 1},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A, N, P        Word
+	A, N, P, I     Word
 	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
@@ -111,13 +115,12 @@ func (g *GMachine) Run() {
 			}
 		case CMPA:
 			value := g.Next()
-			if value == g.A {
-				g.FlagZ = true
-				continue
-			}
-			g.FlagZ = false
+			g.FlagZ = g.A == value
+		case CMPI:
+			value := g.Next()
+			g.FlagZ = g.I == value
 		case JEQ:
-			if g.FlagZ == false {
+			if !g.FlagZ {
 				g.P = g.Memory[g.P]
 				continue
 			}
@@ -130,7 +133,10 @@ func (g *GMachine) Run() {
 		case RETN:
 			g.P = g.N
 			g.N = 0
+		case INCI:
+			g.I++
 		}
+
 	}
 }
 
@@ -190,7 +196,6 @@ func Assemble(code []string) ([]Word, error) {
 			}
 		}
 	}
-	fmt.Println(words)
 	return words, nil
 }
 

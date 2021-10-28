@@ -44,6 +44,9 @@ func TestHelloWorld(t *testing.T) {
 	words, err := gmachine.AssembleFromText(`
 		SETA 65
 		BIOS IOWRITE STDOUT
+		INCI
+		CMPI 3
+		JEQ 2
 	`)
 	if err != nil {
 		t.Fatal(err)
@@ -51,7 +54,7 @@ func TestHelloWorld(t *testing.T) {
 	buf := &bytes.Buffer{}
 	g.Stdout = buf
 	g.RunProgram(words)
-	want := "A"
+	want := "AAA"
 	got := buf.String()
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
