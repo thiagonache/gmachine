@@ -15,6 +15,7 @@ import (
 // DefaultMemSize is the number of 64-bit words of memory which will be
 // allocated to a new G-machine by default.
 const DefaultMemSize = 1024
+
 const (
 	HALT = iota
 	NOOP
@@ -39,6 +40,14 @@ const (
 	PortStdout
 	PortStderr
 )
+
+var PredefinedConstants = map[string]Word{
+	"IOWRITE": IOWrite,
+	"IOREAD":  IORead,
+	"STDIN":   PortStdin,
+	"STDOUT":  PortStdout,
+	"STDERR":  PortStderr,
+}
 
 type Instruction struct {
 	Opcode   Word
@@ -123,7 +132,6 @@ func (g *GMachine) Run() {
 			g.N = 0
 		}
 	}
-
 }
 
 func (g *GMachine) Next() Word {
@@ -150,6 +158,7 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 
 func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
+	constants := PredefinedConstants
 	for pos := 0; pos < len(code); pos++ {
 		word := code[pos]
 
@@ -167,16 +176,21 @@ func Assemble(code []string) ([]Word, error) {
 				return nil, errors.New("missing operand")
 			}
 			for count := 0; count < op.Operands; count++ {
-				temp, err := strconv.Atoi(code[pos+1])
-				if err != nil {
-					return nil, err
+				operand := code[pos+1]
+				operandWord, ok := constants[operand]
+				if !ok {
+					temp, err := strconv.Atoi(operand)
+					if err != nil {
+						return nil, err
+					}
+					operandWord = Word(temp)
 				}
-				operand := Word(temp)
-				words = append(words, operand)
+				words = append(words, operandWord)
 				pos++
 			}
 		}
 	}
+	fmt.Println(words)
 	return words, nil
 }
 
@@ -213,7 +227,7 @@ func AssembleFromText(text string) ([]Word, error) {
 		case strings.HasPrefix(line, "#"):
 			continue
 		}
-		for _, item := range strings.Split(line, " ") {
+		for _, item := range strings.Fields(line) {
 			code = append(code, strings.ToUpper(item))
 		}
 	}
