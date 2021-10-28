@@ -42,10 +42,15 @@ func TestHelloWorld(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	words, err := gmachine.AssembleFromText(`
-		SETA 65
+		JUMP 5
+		65
+		66
+		67
+		SETI 2
+		SETA [I]
 		BIOS IOWRITE STDOUT
 		INCI
-		CMPI 3
+		CMPI 5
 		JEQ 2
 	`)
 	if err != nil {

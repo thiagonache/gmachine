@@ -30,6 +30,8 @@ const (
 	RETN
 	INCI
 	CMPI
+	SETI
+	SETAM
 )
 
 const (
@@ -70,6 +72,7 @@ var TranslateTable = map[string]Instruction{
 	"RETN": {Opcode: RETN, Operands: 0},
 	"INCI": {Opcode: INCI, Operands: 0},
 	"CMPI": {Opcode: CMPI, Operands: 1},
+	"SETI": {Opcode: SETI, Operands: 1},
 }
 
 type Word uint64
@@ -103,6 +106,8 @@ func (g *GMachine) Run() {
 			g.A--
 		case SETA:
 			g.A = g.Next()
+		case SETAM:
+			g.A = g.Memory[g.I]
 		case BIOS:
 			operation := g.Next()
 			fileDescriptor := g.Next()
@@ -166,22 +171,30 @@ func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
 	constants := PredefinedConstants
 	for pos := 0; pos < len(code); pos++ {
-		word := code[pos]
+		token := code[pos]
+		var word Word
 
-		if strings.HasSuffix(word, ":") {
+		if strings.HasSuffix(token, ":") {
 			fmt.Println("start routine")
 		}
 
-		op, ok := TranslateTable[word]
-		if !ok {
-			return nil, fmt.Errorf("invalid instruction %q at postion %d", word, pos)
+		instruction, ok := TranslateTable[token]
+		if ok {
+			word = instruction.Opcode
+		} else {
+			value, err := strconv.Atoi(token)
+			if err != nil {
+				return nil, fmt.Errorf("invalid instruction %q at postion %d", token, pos)
+			}
+			word = Word(value)
+
 		}
-		words = append(words, op.Opcode)
-		if op.Operands > 0 {
-			if pos+op.Operands >= len(code) {
+		if instruction.Operands > 0 {
+			if pos+instruction.Operands >= len(code) {
 				return nil, errors.New("missing operand")
 			}
-			for count := 0; count < op.Operands; count++ {
+			for count := 0; count < instruction.Operands; count++ {
+				// TODO check for square bracket, indicating SETAM operand
 				operand := code[pos+1]
 				operandWord, ok := constants[operand]
 				if !ok {
