@@ -9,11 +9,13 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // DefaultMemSize is the number of 64-bit words of memory which will be
 // allocated to a new G-machine by default.
 const DefaultMemSize = 1024
+
 const (
 	HALT = iota
 	NOOP
@@ -23,6 +25,13 @@ const (
 	BIOS
 	CMPA
 	JEQ
+	JUMP
+	CALL
+	RETN
+	INCI
+	CMPI
+	SETI
+	SETAM
 )
 
 const (
@@ -35,6 +44,14 @@ const (
 	PortStdout
 	PortStderr
 )
+
+var PredefinedConstants = map[string]Word{
+	"IOWRITE": IOWrite,
+	"IOREAD":  IORead,
+	"STDIN":   PortStdin,
+	"STDOUT":  PortStdout,
+	"STDERR":  PortStderr,
+}
 
 type Instruction struct {
 	Opcode   Word
@@ -50,12 +67,18 @@ var TranslateTable = map[string]Instruction{
 	"BIOS": {Opcode: BIOS, Operands: 2},
 	"CMPA": {Opcode: CMPA, Operands: 1},
 	"JEQ":  {Opcode: JEQ, Operands: 1},
+	"JUMP": {Opcode: JUMP, Operands: 1},
+	"CALL": {Opcode: CALL, Operands: 1},
+	"RETN": {Opcode: RETN, Operands: 0},
+	"INCI": {Opcode: INCI, Operands: 0},
+	"CMPI": {Opcode: CMPI, Operands: 1},
+	"SETI": {Opcode: SETI, Operands: 1},
 }
 
 type Word uint64
 
 type GMachine struct {
-	A, P           Word
+	A, N, P, I     Word
 	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
@@ -83,6 +106,10 @@ func (g *GMachine) Run() {
 			g.A--
 		case SETA:
 			g.A = g.Next()
+		case SETI:
+			g.I = g.Next()
+		case SETAM:
+			g.A = g.Memory[g.I]
 		case BIOS:
 			operation := g.Next()
 			fileDescriptor := g.Next()
@@ -95,20 +122,29 @@ func (g *GMachine) Run() {
 			}
 		case CMPA:
 			value := g.Next()
-			if value == g.A {
-				g.FlagZ = true
-				continue
-			}
-			g.FlagZ = false
+			g.FlagZ = g.A == value
+		case CMPI:
+			value := g.Next()
+			g.FlagZ = g.I == value
 		case JEQ:
-			if g.FlagZ == false {
+			if !g.FlagZ {
 				g.P = g.Memory[g.P]
 				continue
 			}
 			g.P++
+		case JUMP:
+			g.P = g.Next()
+		case CALL:
+			g.N = g.P + 1
+			g.P = g.Next()
+		case RETN:
+			g.P = g.N
+			g.N = 0
+		case INCI:
+			g.I++
 		}
-	}
 
+	}
 }
 
 func (g *GMachine) Next() Word {
@@ -135,23 +171,46 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 
 func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
+	constants := PredefinedConstants
 	for pos := 0; pos < len(code); pos++ {
-		op, ok := TranslateTable[code[pos]]
-		if !ok {
-			return nil, fmt.Errorf("invalid instruction %q at postion %d", code[pos], pos)
+		token := code[pos]
+		var word Word
+
+		if strings.HasSuffix(token, ":") {
+			fmt.Println("start routine")
 		}
-		words = append(words, op.Opcode)
-		if op.Operands > 0 {
-			if pos+op.Operands >= len(code) {
+
+		instruction, ok := TranslateTable[token]
+		if ok {
+			word = instruction.Opcode
+		} else {
+			value, err := strconv.Atoi(token)
+			if err != nil {
+				return nil, fmt.Errorf("invalid instruction %q at postion %d", token, pos)
+			}
+			word = Word(value)
+
+		}
+		words = append(words, word)
+		if instruction.Operands > 0 {
+			if pos+instruction.Operands >= len(code) {
 				return nil, errors.New("missing operand")
 			}
-			for count := 0; count < op.Operands; count++ {
-				temp, err := strconv.Atoi(code[pos+1])
-				if err != nil {
-					return nil, err
+			for count := 0; count < instruction.Operands; count++ {
+				operand := code[pos+1]
+				if strings.HasPrefix(operand, "[") {
+					words[pos] = SETAM
+				} else {
+					operandWord, ok := constants[operand]
+					if !ok {
+						temp, err := strconv.Atoi(operand)
+						if err != nil {
+							return nil, err
+						}
+						operandWord = Word(temp)
+					}
+					words = append(words, operandWord)
 				}
-				operand := Word(temp)
-				words = append(words, operand)
 				pos++
 			}
 		}
@@ -169,7 +228,32 @@ func AssembleFromFile(path string) ([]Word, error) {
 	code := []string{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		code = append(code, scanner.Text())
+		code = append(code, strings.ToUpper(scanner.Text()))
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	words, err := Assemble(code)
+	if err != nil {
+		return nil, err
+	}
+	return words, nil
+}
+
+func AssembleFromText(text string) ([]Word, error) {
+	code := []string{}
+	scanner := bufio.NewScanner(strings.NewReader(text))
+	for scanner.Scan() {
+		line := scanner.Text()
+		switch {
+		case line == "":
+			continue
+		case strings.HasPrefix(line, "#"):
+			continue
+		}
+		for _, item := range strings.Fields(line) {
+			code = append(code, strings.ToUpper(item))
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
