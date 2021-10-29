@@ -106,6 +106,8 @@ func (g *GMachine) Run() {
 			g.A--
 		case SETA:
 			g.A = g.Next()
+		case SETI:
+			g.I = g.Next()
 		case SETAM:
 			g.A = g.Memory[g.I]
 		case BIOS:
@@ -189,22 +191,26 @@ func Assemble(code []string) ([]Word, error) {
 			word = Word(value)
 
 		}
+		words = append(words, word)
 		if instruction.Operands > 0 {
 			if pos+instruction.Operands >= len(code) {
 				return nil, errors.New("missing operand")
 			}
 			for count := 0; count < instruction.Operands; count++ {
-				// TODO check for square bracket, indicating SETAM operand
 				operand := code[pos+1]
-				operandWord, ok := constants[operand]
-				if !ok {
-					temp, err := strconv.Atoi(operand)
-					if err != nil {
-						return nil, err
+				if strings.HasPrefix(operand, "[") {
+					words[pos] = SETAM
+				} else {
+					operandWord, ok := constants[operand]
+					if !ok {
+						temp, err := strconv.Atoi(operand)
+						if err != nil {
+							return nil, err
+						}
+						operandWord = Word(temp)
 					}
-					operandWord = Word(temp)
+					words = append(words, operandWord)
 				}
-				words = append(words, operandWord)
 				pos++
 			}
 		}

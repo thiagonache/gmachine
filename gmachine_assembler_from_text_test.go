@@ -42,16 +42,14 @@ func TestHelloWorld(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	words, err := gmachine.AssembleFromText(`
-		JUMP 5
-		65
-		66
-		67
+		JUMP 12
+		72 101 108 108 111 87 111 114 108 100
 		SETI 2
 		SETA [I]
 		BIOS IOWRITE STDOUT
 		INCI
-		CMPI 5
-		JEQ 2
+		CMPI 12
+		JEQ 14
 	`)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +57,7 @@ func TestHelloWorld(t *testing.T) {
 	buf := &bytes.Buffer{}
 	g.Stdout = buf
 	g.RunProgram(words)
-	want := "AAA"
+	want := "HelloWorld"
 	got := buf.String()
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
