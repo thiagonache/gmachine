@@ -65,6 +65,17 @@ func TestINCA(t *testing.T) {
 	}
 }
 
+func TestINCI(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.INCI
+	g.Run()
+	var wantI gmachine.Word = 1
+	if wantI != g.I {
+		t.Errorf("want initial A value %d, got %d", wantI, g.I)
+	}
+}
+
 func TestDECA(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
@@ -144,6 +155,38 @@ func TestCMPA(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	g.Memory[0] = gmachine.CMPA
+	g.Memory[1] = 5
+	g.Run()
+	wantZ := false
+	if wantZ != g.FlagZ {
+		t.Errorf("want flag Z value %t, got %t", wantZ, g.FlagZ)
+	}
+	var wantP gmachine.Word = 3
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
+func TestSETI(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.SETI
+	g.Memory[1] = 5
+	g.Run()
+	var wantI gmachine.Word = 5
+	if wantI != g.I {
+		t.Errorf("want initial A value %d, got %d", wantI, g.I)
+	}
+	var wantP gmachine.Word = 3
+	if wantP != g.P {
+		t.Errorf("want initial P value %d, got %d", wantP, g.P)
+	}
+}
+
+func TestCMPI(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	g.Memory[0] = gmachine.CMPI
 	g.Memory[1] = 5
 	g.Run()
 	wantZ := false
