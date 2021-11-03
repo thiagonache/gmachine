@@ -92,7 +92,7 @@ func TestHelloWorldString(t *testing.T) {
 	}
 }
 
-func TestTestAssembleData(t *testing.T) {
+func TestAssembleData(t *testing.T) {
 	testCases := []struct {
 		code, desc string
 		want       []gmachine.Word
