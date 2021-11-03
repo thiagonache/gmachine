@@ -171,7 +171,7 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 
 func AssembleData(token string) ([]Word, error) {
 	words := []Word{}
-	fmt.Println(token, "is data")
+	//fmt.Println(token, "is data")
 	switch {
 	case strings.HasPrefix(token, "\""):
 		token = strings.ReplaceAll(token, "\"", "")
