@@ -173,28 +173,46 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 	return g.RunProgramFromReader(binFile)
 }
 
+func AssembleData(token string) ([]Word, error) {
+	words := []Word{}
+	fmt.Println(token, "is data")
+	switch {
+	case strings.HasPrefix(token, "\""):
+		token = strings.ReplaceAll(token, "\"", "")
+		for _, r := range token {
+			words = append(words, Word(r))
+		}
+	case strings.HasPrefix(token, "'"):
+		token = strings.ReplaceAll(token, "'", "")
+		for _, r := range token {
+			words = append(words, Word(r))
+		}
+	default:
+		for _, s := range strings.Fields(token) {
+			temp, err := strconv.Atoi(s)
+			if err != nil {
+				return nil, err
+			}
+			words = append(words, Word(temp))
+		}
+
+	}
+	return words, nil
+}
+
 func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
 	constants := PredefinedConstants
-	runes := Runes
 	for pos := 0; pos < len(code); pos++ {
 		token := code[pos]
-		if token == "" {
-			continue
-		}
-		instruction, ok := TranslateTable[token]
+		tokenUpper := strings.ToUpper(token)
+		instruction, ok := TranslateTable[tokenUpper]
 		if !ok {
-			//fmt.Println(token, "is data")
-			token = strings.ReplaceAll(token, "'", "")
-			word, ok := runes[token]
-			if !ok {
-				temp, err := strconv.Atoi(token)
-				if err != nil {
-					return nil, err
-				}
-				word = Word(temp)
+			data, err := AssembleData(token)
+			if err != nil {
+				return nil, err
 			}
-			words = append(words, word)
+			words = append(words, data...)
 			continue
 		}
 		//fmt.Println(token, "is opcode")
@@ -207,7 +225,7 @@ func Assemble(code []string) ([]Word, error) {
 				operand := code[pos+1]
 				//fmt.Println(operand, "is operand")
 				if strings.HasPrefix(operand, "[") {
-					words[pos] = SETAM
+					words[len(words)-1] = SETAM
 					pos++
 					continue
 				}
@@ -289,7 +307,7 @@ func AssembleFromFile(path string) ([]Word, error) {
 	code := []string{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		code = append(code, strings.ToUpper(scanner.Text()))
+		code = append(code, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
@@ -313,7 +331,7 @@ func AssembleFromText(text string) ([]Word, error) {
 			continue
 		}
 		for _, item := range strings.Fields(line) {
-			code = append(code, strings.ToUpper(item))
+			code = append(code, item)
 		}
 	}
 	if err := scanner.Err(); err != nil {

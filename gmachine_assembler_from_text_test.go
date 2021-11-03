@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"gmachine"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // func TestAssembleFromText(t *testing.T) {
@@ -69,7 +71,7 @@ func TestHelloWorldRune(t *testing.T) {
 	g := gmachine.New()
 	words, err := gmachine.AssembleFromText(`
 		JUMP 12
-		'H' 101 108 108 111 87 111 114 108 100
+		"HelloWorld"
 		SETI 2
 		SETA [I]
 		BIOS IOWRITE STDOUT
@@ -87,5 +89,60 @@ func TestHelloWorldRune(t *testing.T) {
 	got := buf.String()
 	if want != got {
 		t.Errorf("want %q, got %q", want, got)
+	}
+}
+
+func TestTestAssembleData(t *testing.T) {
+	testCases := []struct {
+		code, desc string
+		want       []gmachine.Word
+	}{
+		{
+			code: `'A'`,
+			desc: "Assemble string 'A'",
+			want: []gmachine.Word{65},
+		},
+		{
+			code: `"A"`,
+			desc: "Assemble string \"A\"",
+			want: []gmachine.Word{65},
+		},
+		{
+			code: `"Abc"`,
+			desc: "Assemble string \"Abc\"",
+			want: []gmachine.Word{65, 98, 99},
+		},
+		{
+			code: `90`,
+			desc: "Assemble ASCII decimal 90 (Z)",
+			want: []gmachine.Word{90},
+		},
+		{
+			code: `120 121 122`,
+			desc: "Assemble ASCII decimals 120 121 122 (xyz)",
+			want: []gmachine.Word{120, 121, 122},
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			got, err := gmachine.AssembleData(tC.code)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !cmp.Equal(tC.want, got) {
+				t.Error(cmp.Diff(tC.want, got))
+			}
+		})
+	}
+}
+func TestAssembleData(t *testing.T) {
+	t.Parallel()
+	want := []gmachine.Word{65, 98, 99}
+	got, err := gmachine.AssembleData(`"Abc"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
