@@ -244,55 +244,6 @@ func Assemble(code []string) ([]Word, error) {
 	return words, nil
 }
 
-// func AssembleOld(code []string) ([]Word, error) {
-// 	words := []Word{}
-// 	constants := PredefinedConstants
-// 	for pos := 0; pos < len(code); pos++ {
-// 		token := code[pos]
-// 		var word Word
-
-// 		if strings.HasSuffix(token, ":") {
-// 			fmt.Println("start routine")
-// 		}
-
-// 		instruction, ok := TranslateTable[token]
-// 		if ok {
-// 			word = instruction.Opcode
-// 		} else {
-// 			value, err := strconv.Atoi(token)
-// 			if err != nil {
-// 				return nil, fmt.Errorf("invalid instruction %q at postion %d", token, pos)
-// 			}
-// 			word = Word(value)
-
-// 		}
-// 		words = append(words, word)
-// 		if instruction.Operands > 0 {
-// 			if pos+instruction.Operands >= len(code) {
-// 				return nil, errors.New("missing operand")
-// 			}
-// 			for count := 0; count < instruction.Operands; count++ {
-// 				operand := code[pos+1]
-// 				if strings.HasPrefix(operand, "[") {
-// 					words[pos] = SETAM
-// 				} else {
-// 					operandWord, ok := constants[operand]
-// 					if !ok {
-// 						temp, err := strconv.Atoi(operand)
-// 						if err != nil {
-// 							return nil, err
-// 						}
-// 						operandWord = Word(temp)
-// 					}
-// 					words = append(words, operandWord)
-// 				}
-// 				pos++
-// 			}
-// 		}
-// 	}
-// 	return words, nil
-// }
-
 func AssembleFromFile(path string) ([]Word, error) {
 	file, err := os.Open(path)
 	if err != nil {
