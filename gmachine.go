@@ -175,13 +175,13 @@ func AssembleData(token string) ([]Word, error) {
 	switch {
 	case strings.HasPrefix(token, "\""):
 		token = strings.ReplaceAll(token, "\"", "")
-		for _, r := range token {
-			words = append(words, Word(r))
+		for _, l := range token {
+			words = append(words, Word(l))
 		}
 	case strings.HasPrefix(token, "'"):
 		token = strings.ReplaceAll(token, "'", "")
-		for _, r := range token {
-			words = append(words, Word(r))
+		for _, l := range token {
+			words = append(words, Word(l))
 		}
 	default:
 		for _, s := range strings.Fields(token) {
