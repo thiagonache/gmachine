@@ -201,8 +201,7 @@ func Assemble(code []string) ([]Word, error) {
 	constants := PredefinedConstants
 	for pos := 0; pos < len(code); pos++ {
 		token := code[pos]
-		tokenUpper := strings.ToUpper(token)
-		instruction, ok := TranslateTable[tokenUpper]
+		instruction, ok := TranslateTable[strings.ToUpper(token)]
 		if !ok {
 			data, err := AssembleData(token)
 			if err != nil {
