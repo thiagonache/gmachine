@@ -53,10 +53,6 @@ var PredefinedConstants = map[string]Word{
 	"STDERR":  PortStderr,
 }
 
-var Runes = map[string]Word{
-	"H": 72,
-}
-
 type Instruction struct {
 	Opcode   Word
 	Operands int
