@@ -66,7 +66,7 @@ func TestHelloWorld(t *testing.T) {
 	}
 }
 
-func TestHelloWorldRune(t *testing.T) {
+func TestHelloWorldString(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	words, err := gmachine.AssembleFromText(`
@@ -133,16 +133,5 @@ func TestTestAssembleData(t *testing.T) {
 				t.Error(cmp.Diff(tC.want, got))
 			}
 		})
-	}
-}
-func TestAssembleData(t *testing.T) {
-	t.Parallel()
-	want := []gmachine.Word{65, 98, 99}
-	got, err := gmachine.AssembleData(`"Abc"`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !cmp.Equal(want, got) {
-		t.Error(cmp.Diff(want, got))
 	}
 }
