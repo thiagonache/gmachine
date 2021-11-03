@@ -63,3 +63,29 @@ func TestHelloWorld(t *testing.T) {
 		t.Errorf("want %q, got %q", want, got)
 	}
 }
+
+func TestHelloWorldRune(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	words, err := gmachine.AssembleFromText(`
+		JUMP 12
+		'H' 101 108 108 111 87 111 114 108 100
+		SETI 2
+		SETA [I]
+		BIOS IOWRITE STDOUT
+		INCI
+		CMPI 12
+		JEQ 14
+	`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	buf := &bytes.Buffer{}
+	g.Stdout = buf
+	g.RunProgram(words)
+	want := "HelloWorld"
+	got := buf.String()
+	if want != got {
+		t.Errorf("want %q, got %q", want, got)
+	}
+}

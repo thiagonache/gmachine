@@ -53,6 +53,10 @@ var PredefinedConstants = map[string]Word{
 	"STDERR":  PortStderr,
 }
 
+var Runes = map[string]Word{
+	"H": 72,
+}
+
 type Instruction struct {
 	Opcode   Word
 	Operands int
@@ -172,51 +176,108 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
 	constants := PredefinedConstants
+	runes := Runes
 	for pos := 0; pos < len(code); pos++ {
 		token := code[pos]
-		var word Word
-
-		if strings.HasSuffix(token, ":") {
-			fmt.Println("start routine")
+		if token == "" {
+			continue
 		}
-
 		instruction, ok := TranslateTable[token]
-		if ok {
-			word = instruction.Opcode
-		} else {
-			value, err := strconv.Atoi(token)
-			if err != nil {
-				return nil, fmt.Errorf("invalid instruction %q at postion %d", token, pos)
+		if !ok {
+			//fmt.Println(token, "is data")
+			token = strings.ReplaceAll(token, "'", "")
+			word, ok := runes[token]
+			if !ok {
+				temp, err := strconv.Atoi(token)
+				if err != nil {
+					return nil, err
+				}
+				word = Word(temp)
 			}
-			word = Word(value)
-
+			words = append(words, word)
+			continue
 		}
-		words = append(words, word)
+		//fmt.Println(token, "is opcode")
+		words = append(words, instruction.Opcode)
 		if instruction.Operands > 0 {
 			if pos+instruction.Operands >= len(code) {
 				return nil, errors.New("missing operand")
 			}
 			for count := 0; count < instruction.Operands; count++ {
 				operand := code[pos+1]
+				//fmt.Println(operand, "is operand")
 				if strings.HasPrefix(operand, "[") {
 					words[pos] = SETAM
-				} else {
-					operandWord, ok := constants[operand]
-					if !ok {
-						temp, err := strconv.Atoi(operand)
-						if err != nil {
-							return nil, err
-						}
-						operandWord = Word(temp)
-					}
-					words = append(words, operandWord)
+					pos++
+					continue
 				}
+				operandWord, ok := constants[operand]
+				if ok {
+					words = append(words, operandWord)
+					pos++
+					continue
+				}
+				temp, err := strconv.Atoi(operand)
+				if err != nil {
+					return nil, err
+				}
+				words = append(words, Word(temp))
 				pos++
 			}
 		}
 	}
+
 	return words, nil
 }
+
+// func AssembleOld(code []string) ([]Word, error) {
+// 	words := []Word{}
+// 	constants := PredefinedConstants
+// 	for pos := 0; pos < len(code); pos++ {
+// 		token := code[pos]
+// 		var word Word
+
+// 		if strings.HasSuffix(token, ":") {
+// 			fmt.Println("start routine")
+// 		}
+
+// 		instruction, ok := TranslateTable[token]
+// 		if ok {
+// 			word = instruction.Opcode
+// 		} else {
+// 			value, err := strconv.Atoi(token)
+// 			if err != nil {
+// 				return nil, fmt.Errorf("invalid instruction %q at postion %d", token, pos)
+// 			}
+// 			word = Word(value)
+
+// 		}
+// 		words = append(words, word)
+// 		if instruction.Operands > 0 {
+// 			if pos+instruction.Operands >= len(code) {
+// 				return nil, errors.New("missing operand")
+// 			}
+// 			for count := 0; count < instruction.Operands; count++ {
+// 				operand := code[pos+1]
+// 				if strings.HasPrefix(operand, "[") {
+// 					words[pos] = SETAM
+// 				} else {
+// 					operandWord, ok := constants[operand]
+// 					if !ok {
+// 						temp, err := strconv.Atoi(operand)
+// 						if err != nil {
+// 							return nil, err
+// 						}
+// 						operandWord = Word(temp)
+// 					}
+// 					words = append(words, operandWord)
+// 				}
+// 				pos++
+// 			}
+// 		}
+// 	}
+// 	return words, nil
+// }
 
 func AssembleFromFile(path string) ([]Word, error) {
 	file, err := os.Open(path)
@@ -257,6 +318,9 @@ func AssembleFromText(text string) ([]Word, error) {
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
+	}
+	if len(code) <= 0 {
+		return nil, fmt.Errorf("Invalid code. Length is %d", len(code))
 	}
 	words, err := Assemble(code)
 	if err != nil {

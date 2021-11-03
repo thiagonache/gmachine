@@ -23,8 +23,7 @@ func TestAssemble(t *testing.T) {
 
 func TestAssembleInvalid(t *testing.T) {
 	t.Parallel()
-	input := []string{""}
-	_, err := gmachine.Assemble(input)
+	_, err := gmachine.AssembleFromText("")
 	if err == nil {
 		t.Errorf("An error is expected but not found")
 	}
