@@ -135,3 +135,43 @@ func TestAssembleData(t *testing.T) {
 		})
 	}
 }
+
+func TestAssembleOperand(t *testing.T) {
+	constants := gmachine.PredefinedConstants
+	testCases := []struct {
+		code, desc string
+		want       gmachine.Word
+	}{
+		{
+			code: "2",
+			desc: "Assemble decimal 2",
+			want: gmachine.Word(2),
+		},
+		{
+			code: "10",
+			desc: "Assemble decimal 10",
+			want: gmachine.Word(10),
+		},
+		{
+			code: "[I]",
+			desc: "Assemble dereference [I]",
+			want: gmachine.SETAM,
+		},
+		{
+			code: "IOWRITE",
+			desc: "Assemble constant IOWrite",
+			want: gmachine.IOWrite,
+		},
+	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			got, err := gmachine.AssembleOperand(constants, tC.code)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !cmp.Equal(tC.want, got) {
+				t.Error(cmp.Diff(tC.want, got))
+			}
+		})
+	}
+}

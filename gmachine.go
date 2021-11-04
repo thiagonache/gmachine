@@ -196,6 +196,21 @@ func AssembleData(token string) ([]Word, error) {
 	return words, nil
 }
 
+func AssembleOperand(constants map[string]Word, token string) (Word, error) {
+	if strings.HasPrefix(token, "[") {
+		return SETAM, nil
+	}
+	word, ok := constants[token]
+	if ok {
+		return word, nil
+	}
+	temp, err := strconv.Atoi(token)
+	if err != nil {
+		return 0, err
+	}
+	return Word(temp), nil
+}
+
 func Assemble(code []string) ([]Word, error) {
 	words := []Word{}
 	constants := PredefinedConstants
@@ -212,31 +227,30 @@ func Assemble(code []string) ([]Word, error) {
 		}
 		//fmt.Println(token, "is opcode")
 		words = append(words, instruction.Opcode)
-		if instruction.Operands > 0 {
-			if pos+instruction.Operands >= len(code) {
-				return nil, errors.New("missing operand")
-			}
-			for count := 0; count < instruction.Operands; count++ {
-				operand := code[pos+1]
-				//fmt.Println(operand, "is operand")
-				if strings.HasPrefix(operand, "[") {
-					words[len(words)-1] = SETAM
-					pos++
-					continue
-				}
-				operandWord, ok := constants[operand]
-				if ok {
-					words = append(words, operandWord)
-					pos++
-					continue
-				}
-				temp, err := strconv.Atoi(operand)
+		if instruction.Operands <= 0 {
+			continue
+		}
+		if pos+instruction.Operands >= len(code) {
+			return nil, errors.New("missing operand")
+		}
+		for count := 0; count < instruction.Operands; count++ {
+			operand := code[pos+1]
+			//fmt.Println(operand, "is operand")
+			if strings.HasPrefix(operand, "[") {
+				word, err := AssembleOperand(constants, operand)
 				if err != nil {
 					return nil, err
 				}
-				words = append(words, Word(temp))
+				words[len(words)-1] = word
 				pos++
+				continue
 			}
+			word, err := AssembleOperand(constants, operand)
+			if err != nil {
+				return nil, err
+			}
+			words = append(words, word)
+			pos++
 		}
 	}
 
