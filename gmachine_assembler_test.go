@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestAssemble(t *testing.T) {
+func TestAssembleFromSlice(t *testing.T) {
 	t.Parallel()
 
 	input := []string{"HALT", "NOOP"}
@@ -23,14 +23,13 @@ func TestAssemble(t *testing.T) {
 
 func TestAssembleInvalid(t *testing.T) {
 	t.Parallel()
-	input := []string{""}
-	_, err := gmachine.Assemble(input)
+	_, err := gmachine.AssembleFromText("")
 	if err == nil {
 		t.Errorf("An error is expected but not found")
 	}
 }
 
-func TestAssembleOperand(t *testing.T) {
+func TestAssembleFromSliceOperand(t *testing.T) {
 	t.Parallel()
 	input := []string{"SETA", "5"}
 	want := []gmachine.Word{gmachine.SETA, 5}
@@ -43,7 +42,7 @@ func TestAssembleOperand(t *testing.T) {
 	}
 }
 
-func TestAssembleOperandInvalid(t *testing.T) {
+func TestAssembleFromSliceMissingOperand(t *testing.T) {
 	t.Parallel()
 	input := []string{"SETA", "DECA"}
 	_, err := gmachine.Assemble(input)
