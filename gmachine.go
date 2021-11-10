@@ -32,6 +32,7 @@ const (
 	CMPI
 	SETI
 	SETAM
+	BREAK
 )
 
 const (
@@ -59,26 +60,28 @@ type Instruction struct {
 }
 
 var TranslateTable = map[string]Instruction{
-	"HALT": {Opcode: HALT, Operands: 0},
-	"NOOP": {Opcode: NOOP, Operands: 0},
-	"SETA": {Opcode: SETA, Operands: 1},
-	"DECA": {Opcode: DECA, Operands: 0},
-	"INCA": {Opcode: INCA, Operands: 0},
-	"BIOS": {Opcode: BIOS, Operands: 2},
-	"CMPA": {Opcode: CMPA, Operands: 1},
-	"JEQ":  {Opcode: JEQ, Operands: 1},
-	"JUMP": {Opcode: JUMP, Operands: 1},
-	"CALL": {Opcode: CALL, Operands: 1},
-	"RETN": {Opcode: RETN, Operands: 0},
-	"INCI": {Opcode: INCI, Operands: 0},
-	"CMPI": {Opcode: CMPI, Operands: 1},
-	"SETI": {Opcode: SETI, Operands: 1},
+	"HALT":  {Opcode: HALT, Operands: 0},
+	"NOOP":  {Opcode: NOOP, Operands: 0},
+	"SETA":  {Opcode: SETA, Operands: 1},
+	"DECA":  {Opcode: DECA, Operands: 0},
+	"INCA":  {Opcode: INCA, Operands: 0},
+	"BIOS":  {Opcode: BIOS, Operands: 2},
+	"CMPA":  {Opcode: CMPA, Operands: 1},
+	"JEQ":   {Opcode: JEQ, Operands: 1},
+	"JUMP":  {Opcode: JUMP, Operands: 1},
+	"CALL":  {Opcode: CALL, Operands: 1},
+	"RETN":  {Opcode: RETN, Operands: 0},
+	"INCI":  {Opcode: INCI, Operands: 0},
+	"CMPI":  {Opcode: CMPI, Operands: 1},
+	"SETI":  {Opcode: SETI, Operands: 1},
+	"BREAK": {Opcode: BREAK, Operands: 1},
 }
 
 type Word uint64
 
 type GMachine struct {
 	A, N, P, I     Word
+	Breakpoints    map[Word]bool
 	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
@@ -86,15 +89,31 @@ type GMachine struct {
 
 func New() *GMachine {
 	return &GMachine{
-		Memory: make([]Word, DefaultMemSize),
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
+		Breakpoints: map[Word]bool{},
+		Memory:      make([]Word, DefaultMemSize),
+		Stdout:      os.Stdout,
+		Stderr:      os.Stderr,
 	}
+}
+
+func (g *GMachine) PrintMachineData(code Word) {
+	fmt.Fprintf(g.Stdout,
+		`Registers:
+A => %d
+I => %d
+P => %d
+Z => %t
+
+code: %d`, g.A, g.I, g.P, g.FlagZ, code)
 }
 
 func (g *GMachine) Run() {
 	for {
 		opcode := g.Memory[g.P]
+		_, ok := g.Breakpoints[g.P]
+		if ok {
+			g.PrintMachineData(opcode)
+		}
 		g.P++
 		switch opcode {
 		case NOOP:
@@ -120,6 +139,8 @@ func (g *GMachine) Run() {
 				}
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
+		case BREAK:
+			g.Breakpoints[g.Next()] = true
 		case CMPA:
 			value := g.Next()
 			g.FlagZ = g.A == value

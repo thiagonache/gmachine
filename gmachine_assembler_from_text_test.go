@@ -2,6 +2,7 @@ package gmachine_test
 
 import (
 	"bytes"
+	"fmt"
 	"gmachine"
 	"testing"
 
@@ -92,86 +93,29 @@ func TestHelloWorldString(t *testing.T) {
 	}
 }
 
-func TestAssembleData(t *testing.T) {
-	testCases := []struct {
-		code, desc string
-		want       []gmachine.Word
-	}{
-		{
-			code: `'A'`,
-			desc: "Assemble string 'A'",
-			want: []gmachine.Word{65},
-		},
-		{
-			code: `"A"`,
-			desc: "Assemble string \"A\"",
-			want: []gmachine.Word{65},
-		},
-		{
-			code: `"Abc"`,
-			desc: "Assemble string \"Abc\"",
-			want: []gmachine.Word{65, 98, 99},
-		},
-		{
-			code: `90`,
-			desc: "Assemble ASCII decimal 90 (Z)",
-			want: []gmachine.Word{90},
-		},
-		{
-			code: `120 121 122`,
-			desc: "Assemble ASCII decimals 120 121 122 (xyz)",
-			want: []gmachine.Word{120, 121, 122},
-		},
+func TestBREAK(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	words, err := gmachine.AssembleFromText(`
+		BREAK 3
+		INCA
+		HALT
+	`)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			got, err := gmachine.AssembleData(tC.code)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !cmp.Equal(tC.want, got) {
-				t.Error(cmp.Diff(tC.want, got))
-			}
-		})
-	}
-}
+	buf := &bytes.Buffer{}
+	g.Stdout = buf
+	g.RunProgram(words)
+	want := fmt.Sprintf(`Registers:
+A => 1
+I => 0
+P => 3
+Z => false
 
-func TestAssembleOperand(t *testing.T) {
-	constants := gmachine.PredefinedConstants
-	testCases := []struct {
-		code, desc string
-		want       gmachine.Word
-	}{
-		{
-			code: "2",
-			desc: "Assemble decimal 2",
-			want: gmachine.Word(2),
-		},
-		{
-			code: "10",
-			desc: "Assemble decimal 10",
-			want: gmachine.Word(10),
-		},
-		{
-			code: "[I]",
-			desc: "Assemble dereference [I]",
-			want: gmachine.SETAM,
-		},
-		{
-			code: "IOWRITE",
-			desc: "Assemble constant IOWrite",
-			want: gmachine.IOWrite,
-		},
-	}
-	for _, tC := range testCases {
-		t.Run(tC.desc, func(t *testing.T) {
-			got, err := gmachine.AssembleOperand(constants, tC.code)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !cmp.Equal(tC.want, got) {
-				t.Error(cmp.Diff(tC.want, got))
-			}
-		})
+code: %d`, gmachine.HALT)
+	got := buf.String()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
 	}
 }
