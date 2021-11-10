@@ -74,14 +74,13 @@ var TranslateTable = map[string]Instruction{
 	"INCI":  {Opcode: INCI, Operands: 0},
 	"CMPI":  {Opcode: CMPI, Operands: 1},
 	"SETI":  {Opcode: SETI, Operands: 1},
-	"BREAK": {Opcode: BREAK, Operands: 1},
+	"BREAK": {Opcode: BREAK, Operands: 0},
 }
 
 type Word uint64
 
 type GMachine struct {
 	A, N, P, I     Word
-	Breakpoints    map[Word]bool
 	FlagZ          bool
 	Memory         []Word
 	Stdout, Stderr io.Writer
@@ -89,10 +88,9 @@ type GMachine struct {
 
 func New() *GMachine {
 	return &GMachine{
-		Breakpoints: map[Word]bool{},
-		Memory:      make([]Word, DefaultMemSize),
-		Stdout:      os.Stdout,
-		Stderr:      os.Stderr,
+		Memory: make([]Word, DefaultMemSize),
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 }
 
@@ -110,10 +108,6 @@ code: %d`, g.A, g.I, g.P, g.FlagZ, code)
 func (g *GMachine) Run() {
 	for {
 		opcode := g.Memory[g.P]
-		_, ok := g.Breakpoints[g.P]
-		if ok {
-			g.PrintMachineData(opcode)
-		}
 		g.P++
 		switch opcode {
 		case NOOP:
@@ -140,7 +134,8 @@ func (g *GMachine) Run() {
 				fmt.Fprintf(g.Stderr, "%c", g.A)
 			}
 		case BREAK:
-			g.Breakpoints[g.Next()] = true
+			g.PrintMachineData(opcode)
+			return
 		case CMPA:
 			value := g.Next()
 			g.FlagZ = g.A == value
@@ -190,9 +185,18 @@ func (g *GMachine) ExecuteBinary(binPath string) error {
 	return g.RunProgramFromReader(binFile)
 }
 
+func (g *GMachine) State() State {
+	return State{
+		P:    g.P,
+		A:    g.A,
+		I:    g.I,
+		Next: g.Memory[g.P],
+	}
+}
+
 func AssembleData(token string) ([]Word, error) {
 	words := []Word{}
-	//fmt.Println(token, "is data")
+	// fmt.Println(token, "is data")
 	switch {
 	case strings.HasPrefix(token, "\""):
 		token = strings.ReplaceAll(token, "\"", "")
@@ -246,7 +250,7 @@ func Assemble(code []string) ([]Word, error) {
 			words = append(words, data...)
 			continue
 		}
-		//fmt.Println(token, "is opcode")
+		// fmt.Println(token, "is opcode")
 		words = append(words, instruction.Opcode)
 		if instruction.Operands <= 0 {
 			continue
@@ -256,7 +260,7 @@ func Assemble(code []string) ([]Word, error) {
 		}
 		for count := 0; count < instruction.Operands; count++ {
 			operand := code[pos+1]
-			//fmt.Println(operand, "is operand")
+			// fmt.Println(operand, "is operand")
 			if strings.HasPrefix(operand, "[") {
 				word, err := AssembleOperand(constants, operand)
 				if err != nil {
@@ -380,4 +384,14 @@ func WriteWords(w io.Writer, data []Word) error {
 func RunCLI(path string) error {
 	g := New()
 	return g.ExecuteBinary(path)
+}
+
+type State struct {
+	P, A, I, Next Word
+	Z             bool
+}
+
+func (s State) String() string {
+	return fmt.Sprintf("P: %d A: %d I: %d Z: %t Next: %d",
+		s.P, s.A, s.I, s.Z, s.Next)
 }

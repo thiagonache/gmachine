@@ -2,7 +2,6 @@ package gmachine_test
 
 import (
 	"bytes"
-	"fmt"
 	"gmachine"
 	"testing"
 
@@ -97,24 +96,55 @@ func TestBREAK(t *testing.T) {
 	t.Parallel()
 	g := gmachine.New()
 	words, err := gmachine.AssembleFromText(`
-		BREAK 3
+		INCA
+		BREAK
 		INCA
 		HALT
 	`)
 	if err != nil {
 		t.Fatal(err)
 	}
-	buf := &bytes.Buffer{}
-	g.Stdout = buf
 	g.RunProgram(words)
-	want := fmt.Sprintf(`Registers:
-A => 1
-I => 0
-P => 3
-Z => false
+	// at breakpoint
+	want := gmachine.State{
+		P:    2,
+		A:    1,
+		I:    0,
+		Z:    false,
+		Next: gmachine.INCA,
+	}
+	got := g.State()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+	// run to end
+	g.Run()
+	want = gmachine.State{
+		P:    4,
+		A:    2,
+		I:    0,
+		Z:    false,
+		Next: gmachine.HALT,
+	}
+	got = g.State()
+	if !cmp.Equal(want, got) {
+		t.Error(cmp.Diff(want, got))
+	}
+}
 
-code: %d`, gmachine.HALT)
-	got := buf.String()
+func TestStateString(t *testing.T) {
+	t.Parallel()
+	g := gmachine.New()
+	words, err := gmachine.AssembleFromText(`
+		INCA
+		HALT
+	`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g.RunProgram(words)
+	want := "P: 2 A: 1 I: 0 Z: false Next: 0"
+	got := g.State().String()
 	if !cmp.Equal(want, got) {
 		t.Error(cmp.Diff(want, got))
 	}
